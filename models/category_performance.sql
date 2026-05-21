@@ -10,8 +10,7 @@ dim_categories as (
         category_key,
         category_name,
         parent_category,
-        department,
-        full_path
+        department
     from db_boosting_april_2026_cohort.silver.dim_category
     where __END_AT is null
 ),
@@ -23,7 +22,6 @@ category_totals as (
         d.category_name,
         d.parent_category,
         d.department,
-        d.full_path,
         sum(s.item_count)               as total_item_count,
         sum(s.total_revenue)            as total_revenue,
         sum(s.total_gross_margin)       as total_gross_margin,
@@ -35,7 +33,7 @@ category_totals as (
     left join dim_categories d on s.category_key = d.category_key
     group by
         s.category_key,
-        d.category_name, d.parent_category, d.department, d.full_path
+        d.category_name, d.parent_category, d.department
 ),
 
 with_share as (
@@ -53,7 +51,6 @@ final as (
         category_name,
         parent_category,
         department,
-        full_path,
         total_item_count,
         total_revenue,
         total_gross_margin,

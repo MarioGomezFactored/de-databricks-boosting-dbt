@@ -11,15 +11,14 @@ brand_category_totals as (
         max(category_name)              as category_name,
         max(parent_category)            as parent_category,
         max(department)                 as department,
-        max(full_path)                  as full_path,
-        count(*)                        as total_item_count,
-        sum(line_total)                 as total_revenue,
-        sum(gross_margin)               as total_gross_margin,
-        avg(discount_pct)               as avg_discount_pct,
-        sum(quantity)                   as total_units_sold,
-        count(distinct order_key)       as total_orders,
+        sum(item_count)                 as total_item_count,
+        sum(total_revenue)              as total_revenue,
+        sum(total_gross_margin)         as total_gross_margin,
+        avg(avg_discount_pct)           as avg_discount_pct,
+        sum(total_units_sold)           as total_units_sold,
+        sum(order_count)                as total_orders,
         count(distinct order_date_key)  as active_days
-    from joined
+    from source
     group by brand, category_key
 ),
 
@@ -39,7 +38,6 @@ select
     category_name,
     parent_category,
     department,
-    full_path,
     total_item_count,
     total_revenue,
     total_gross_margin,
