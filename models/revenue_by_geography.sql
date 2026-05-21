@@ -1,8 +1,40 @@
 {{ config(materialized='table') }}
 
-with source as (
-    select * from db_boosting_april_2026_cohort.gold.orders_daily_summary
+-- gold.orders_daily_summary lost ship_location_key during aggregation, so we source
+-- from silver to recover ship_country and ship_region.
+
+with orders as (
+    select
+        order_date_key,
+        currency_code,
+        ship_location_key,
+        total_amount    as order_revenue,
+        discount_amount as order_discount,
+        item_count
+    from db_boosting_april_2026_cohort.silver.fact_orders_silver
     where order_status != 'Cancelled'
+),
+
+dim_locations as (
+    select
+        location_key,
+        country as ship_country,
+        region  as ship_region
+    from db_boosting_april_2026_cohort.silver.dim_location
+    where __END_AT is null
+),
+
+joined as (
+    select
+        o.order_date_key,
+        o.currency_code,
+        l.ship_country,
+        l.ship_region,
+        o.order_revenue,
+        o.order_discount,
+        o.item_count
+    from orders o
+    left join dim_locations l on o.ship_location_key = l.location_key
 ),
 
 geo_totals as (
@@ -10,13 +42,13 @@ geo_totals as (
         ship_country,
         ship_region,
         currency_code,
-        sum(order_count)               as order_count,
-        sum(total_revenue)             as total_revenue,
-        sum(total_discount)            as total_discount,
-        sum(total_items)               as total_items,
-        avg(avg_order_value)           as avg_order_value,
+        count(*)                       as order_count,
+        sum(order_revenue)             as total_revenue,
+        sum(order_discount)            as total_discount,
+        sum(item_count)                as total_items,
+        avg(order_revenue)             as avg_order_value,
         count(distinct order_date_key) as active_days
-    from source
+    from joined
     group by ship_country, ship_region, currency_code
 ),
 

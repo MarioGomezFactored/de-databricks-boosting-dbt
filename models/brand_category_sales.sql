@@ -1,25 +1,75 @@
 {{ config(materialized='table') }}
 
-with source as (
-    select * from db_boosting_april_2026_cohort.gold.product_category_sales
+-- gold.product_category_sales doesn't yet carry brand (requires DLT rerun), so we
+-- source from silver fact_order_items_silver and join both dimension tables directly.
+
+with items as (
+    select
+        order_key,
+        product_key,
+        category_key,
+        order_date_key,
+        line_total,
+        gross_margin,
+        discount_pct,
+        quantity
+    from db_boosting_april_2026_cohort.silver.fact_order_items_silver
+),
+
+dim_categories as (
+    select
+        category_key,
+        category_name,
+        parent_category,
+        department,
+        full_path
+    from db_boosting_april_2026_cohort.silver.dim_category
+    where __END_AT is null
+),
+
+dim_products as (
+    select
+        product_key,
+        brand
+    from db_boosting_april_2026_cohort.silver.dim_product
+    where __END_AT is null
+),
+
+joined as (
+    select
+        i.order_key,
+        i.order_date_key,
+        p.brand,
+        c.category_key,
+        c.category_name,
+        c.parent_category,
+        c.department,
+        c.full_path,
+        i.line_total,
+        i.gross_margin,
+        i.discount_pct,
+        i.quantity
+    from items i
+    left join dim_categories c on i.category_key = c.category_key
+    left join dim_products   p on i.product_key   = p.product_key
 ),
 
 brand_category_totals as (
     select
         brand,
         category_key,
-        max(category_name)             as category_name,
-        max(parent_category)           as parent_category,
-        max(department)                as department,
-        max(full_path)                 as full_path,
-        sum(item_count)                as total_item_count,
-        sum(total_revenue)             as total_revenue,
-        sum(total_gross_margin)        as total_gross_margin,
-        avg(avg_discount_pct)          as avg_discount_pct,
-        sum(total_units_sold)          as total_units_sold,
-        sum(order_count)               as total_orders,
-        count(distinct order_date_key) as active_days
-    from source
+        max(category_name)              as category_name,
+        max(parent_category)            as parent_category,
+        max(department)                 as department,
+        max(full_path)                  as full_path,
+        count(*)                        as total_item_count,
+        sum(line_total)                 as total_revenue,
+        sum(gross_margin)               as total_gross_margin,
+        avg(discount_pct)               as avg_discount_pct,
+        sum(quantity)                   as total_units_sold,
+        count(distinct order_key)       as total_orders,
+        count(distinct order_date_key)  as active_days
+    from joined
     group by brand, category_key
 ),
 
