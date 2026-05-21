@@ -22,13 +22,69 @@ models:
         tests:
           - not_null
 
+  - name: revenue_by_segment
+    description: "Revenue aggregated by customer segment and tier, excluding cancelled orders. Grain: (customer_segment, customer_tier, currency_code)."
+    columns:
+      - name: customer_segment
+        tests:
+          - not_null
+      - name: customer_tier
+        tests:
+          - not_null
+      - name: currency_code
+        tests:
+          - not_null
+      - name: total_revenue
+        tests:
+          - not_null
+      - name: order_count
+        tests:
+          - not_null
+      - name: revenue_share_pct
+        tests:
+          - not_null
+
+  - name: revenue_by_geography
+    description: "Revenue aggregated by shipping country and region, excluding cancelled orders. Grain: (ship_country, ship_region, currency_code)."
+    columns:
+      - name: ship_country
+        tests:
+          - not_null
+      - name: ship_region
+        tests:
+          - not_null
+      - name: currency_code
+        tests:
+          - not_null
+      - name: total_revenue
+        tests:
+          - not_null
+      - name: order_count
+        tests:
+          - not_null
+      - name: revenue_share_pct
+        tests:
+          - not_null
+
   - name: top_sellers_ranked
-    description: "Sellers ranked by total revenue across all currencies, with market share."
+    description: "Sellers ranked by total revenue across all currencies, enriched with seller profile and geography."
     columns:
       - name: seller_key
         tests:
           - not_null
           - unique
+      - name: seller_name
+        tests:
+          - not_null
+      - name: seller_type
+        tests:
+          - not_null
+      - name: seller_country
+        tests:
+          - not_null
+      - name: seller_region
+        tests:
+          - not_null
       - name: revenue_rank
         tests:
           - not_null
@@ -40,12 +96,23 @@ models:
           - not_null
 
   - name: category_performance
-    description: "Category-level revenue, margin, and discount aggregations with revenue share."
+    description: "Category-level revenue, margin, and discount aggregations enriched with full category hierarchy."
     columns:
       - name: category_key
         tests:
           - not_null
           - unique
+      - name: category_name
+        tests:
+          - not_null
+      - name: parent_category
+        description: "Immediate parent in the category hierarchy."
+      - name: department
+        description: "Top-level department grouping."
+        tests:
+          - not_null
+      - name: full_path
+        description: "Full slash-delimited hierarchy path."
       - name: revenue_rank
         tests:
           - not_null
@@ -53,6 +120,40 @@ models:
         tests:
           - not_null
       - name: gross_margin_pct
+        tests:
+          - not_null
+
+  - name: brand_category_sales
+    description: "Sales broken down by brand and category with full hierarchy. Grain: (brand, category_key)."
+    columns:
+      - name: brand
+        tests:
+          - not_null
+      - name: category_key
+        tests:
+          - not_null
+      - name: category_name
+        tests:
+          - not_null
+      - name: department
+        tests:
+          - not_null
+      - name: total_revenue
+        tests:
+          - not_null
+      - name: revenue_rank
+        tests:
+          - not_null
+      - name: gross_margin_pct
+        tests:
+          - not_null
+      - name: revenue_share_pct
+        tests:
+          - not_null
+      - name: revenue_share_within_brand_pct
+        tests:
+          - not_null
+      - name: revenue_share_within_dept_pct
         tests:
           - not_null
 

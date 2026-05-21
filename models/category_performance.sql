@@ -7,6 +7,10 @@ with source as (
 category_totals as (
     select
         category_key,
+        max(category_name)       as category_name,
+        max(parent_category)     as parent_category,
+        max(department)          as department,
+        max(full_path)           as full_path,
         sum(item_count)          as total_item_count,
         sum(total_revenue)       as total_revenue,
         sum(total_gross_margin)  as total_gross_margin,
@@ -30,6 +34,10 @@ with_share as (
 final as (
     select
         category_key,
+        category_name,
+        parent_category,
+        department,
+        full_path,
         total_item_count,
         total_revenue,
         total_gross_margin,
