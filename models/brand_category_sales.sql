@@ -1,57 +1,7 @@
 {{ config(materialized='table') }}
 
--- gold.product_category_sales doesn't yet carry brand (requires DLT rerun), so we
--- source from silver fact_order_items_silver and join both dimension tables directly.
-
-with items as (
-    select
-        order_key,
-        product_key,
-        category_key,
-        order_date_key,
-        line_total,
-        gross_margin,
-        discount_pct,
-        quantity
-    from db_boosting_april_2026_cohort.silver.fact_order_items_silver
-),
-
-dim_categories as (
-    select
-        category_key,
-        category_name,
-        parent_category,
-        department,
-        full_path
-    from db_boosting_april_2026_cohort.silver.dim_category
-    where __END_AT is null
-),
-
-dim_products as (
-    select
-        product_key,
-        brand
-    from db_boosting_april_2026_cohort.silver.dim_product
-    where __END_AT is null
-),
-
-joined as (
-    select
-        i.order_key,
-        i.order_date_key,
-        p.brand,
-        c.category_key,
-        c.category_name,
-        c.parent_category,
-        c.department,
-        c.full_path,
-        i.line_total,
-        i.gross_margin,
-        i.discount_pct,
-        i.quantity
-    from items i
-    left join dim_categories c on i.category_key = c.category_key
-    left join dim_products   p on i.product_key   = p.product_key
+with source as (
+    select * from db_boosting_april_2026_cohort.gold.product_category_sales
 ),
 
 brand_category_totals as (
