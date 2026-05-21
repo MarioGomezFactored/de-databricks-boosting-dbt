@@ -34,7 +34,7 @@ joined as (
         o.order_discount,
         o.item_count
     from orders o
-    left join dim_locations l on o.ship_location_key = l.location_key
+    join dim_locations l on o.ship_location_key = l.location_key
 ),
 
 geo_totals as (

@@ -30,7 +30,7 @@ category_totals as (
         sum(s.order_count)              as total_orders,
         count(distinct s.order_date_key) as active_days
     from source s
-    left join dim_categories d on s.category_key = d.category_key
+    join dim_categories d on s.category_key = d.category_key
     group by
         s.category_key,
         d.category_name, d.parent_category, d.department

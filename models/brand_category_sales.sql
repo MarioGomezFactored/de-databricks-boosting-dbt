@@ -4,22 +4,47 @@ with source as (
     select * from db_boosting_april_2026_cohort.gold.product_category_sales
 ),
 
-brand_category_totals as (
+dim_categories as (
+    select
+        category_key,
+        category_name,
+        parent_category,
+        department
+    from db_boosting_april_2026_cohort.silver.dim_category
+    where __END_AT is null
+),
+
+brand_facts as (
     select
         brand,
         category_key,
-        max(category_name)              as category_name,
-        max(parent_category)            as parent_category,
-        max(department)                 as department,
-        sum(item_count)                 as total_item_count,
-        sum(total_revenue)              as total_revenue,
-        sum(total_gross_margin)         as total_gross_margin,
-        avg(avg_discount_pct)           as avg_discount_pct,
-        sum(total_units_sold)           as total_units_sold,
-        sum(order_count)                as total_orders,
-        count(distinct order_date_key)  as active_days
+        sum(item_count)                as total_item_count,
+        sum(total_revenue)             as total_revenue,
+        sum(total_gross_margin)        as total_gross_margin,
+        avg(avg_discount_pct)          as avg_discount_pct,
+        sum(total_units_sold)          as total_units_sold,
+        sum(order_count)               as total_orders,
+        count(distinct order_date_key) as active_days
     from source
     group by brand, category_key
+),
+
+brand_category_totals as (
+    select
+        f.brand,
+        f.category_key,
+        d.category_name,
+        d.parent_category,
+        d.department,
+        f.total_item_count,
+        f.total_revenue,
+        f.total_gross_margin,
+        f.avg_discount_pct,
+        f.total_units_sold,
+        f.total_orders,
+        f.active_days
+    from brand_facts f
+    join dim_categories d on f.category_key = d.category_key
 ),
 
 with_share as (
