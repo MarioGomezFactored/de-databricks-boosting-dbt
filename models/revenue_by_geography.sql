@@ -1,13 +1,13 @@
 {{ config(materialized='table') }}
 
--- gold.orders_daily_summary lost ship_location_id during aggregation, so we source
+-- gold.orders_daily_summary lost ship_location_key during aggregation, so we source
 -- from silver to recover ship_country and ship_region.
 
 with orders as (
     select
-        order_date_id,
+        order_date_key,
         currency_code,
-        ship_location_id,
+        ship_location_key,
         total_amount    as order_revenue,
         discount_amount as order_discount,
         item_count
@@ -17,7 +17,7 @@ with orders as (
 
 dim_locations as (
     select
-        location_id,
+        location_key,
         country as ship_country,
         region  as ship_region
     from db_boosting_april_2026_cohort.silver.dim_location
@@ -26,7 +26,7 @@ dim_locations as (
 
 joined as (
     select
-        o.order_date_id,
+        o.order_date_key,
         o.currency_code,
         l.ship_country,
         l.ship_region,
@@ -34,7 +34,7 @@ joined as (
         o.order_discount,
         o.item_count
     from orders o
-    join dim_locations l on o.ship_location_id = l.location_id
+    join dim_locations l on o.ship_location_key = l.location_key
 ),
 
 geo_totals as (
@@ -47,7 +47,7 @@ geo_totals as (
         sum(order_discount)            as total_discount,
         sum(item_count)                as total_items,
         avg(order_revenue)             as avg_order_value,
-        count(distinct order_date_id) as active_days
+        count(distinct order_date_key) as active_days
     from joined
     group by ship_country, ship_region, currency_code
 ),

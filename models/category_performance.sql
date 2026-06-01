@@ -7,7 +7,7 @@ with source as (
 -- Active SCD2 records from silver for full category hierarchy
 dim_categories as (
     select
-        category_id,
+        category_key,
         category_name,
         parent_category,
         department
@@ -18,7 +18,7 @@ dim_categories as (
 -- Category-level rollup; join silver for the hierarchy attributes
 category_totals as (
     select
-        s.category_id,
+        s.category_key,
         d.category_name,
         d.parent_category,
         d.department,
@@ -28,11 +28,11 @@ category_totals as (
         avg(s.avg_discount_pct)         as avg_discount_pct,
         sum(s.total_units_sold)         as total_units_sold,
         sum(s.order_count)              as total_orders,
-        count(distinct s.order_date_id) as active_days
+        count(distinct s.order_date_key) as active_days
     from source s
-    join dim_categories d on s.category_id = d.category_id
+    join dim_categories d on s.category_key = d.category_key
     group by
-        s.category_id,
+        s.category_key,
         d.category_name, d.parent_category, d.department
 ),
 
@@ -47,7 +47,7 @@ with_share as (
 
 final as (
     select
-        category_id,
+        category_key,
         category_name,
         parent_category,
         department,

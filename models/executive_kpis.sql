@@ -20,7 +20,7 @@ order_kpis as (
         sum(total_tax)                                                                as total_tax,
         sum(total_items)                                                              as total_items,
         avg(avg_order_value)                                                          as avg_order_value,
-        count(distinct order_date_id)                                                as active_days,
+        count(distinct order_date_key)                                                as active_days,
         sum(case when order_status = 'Cancelled' then order_count else 0 end)        as cancelled_orders,
         sum(case when order_status = 'Delivered' then order_count else 0 end)        as delivered_orders
     from orders
@@ -28,7 +28,7 @@ order_kpis as (
 
 seller_kpis as (
     select
-        count(distinct seller_id) as active_sellers,
+        count(distinct seller_key) as active_sellers,
         sum(total_gross_margin)    as total_gross_margin,
         avg(avg_margin_pct)        as avg_margin_pct
     from sellers
@@ -36,7 +36,7 @@ seller_kpis as (
 
 category_kpis as (
     select
-        count(distinct category_id) as active_categories,
+        count(distinct category_key) as active_categories,
         avg(avg_discount_pct)        as avg_discount_pct
     from categories
 ),

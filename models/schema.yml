@@ -4,7 +4,7 @@ models:
   - name: revenue_by_date
     description: "Daily revenue trends with cumulative totals by currency, excluding cancelled orders."
     columns:
-      - name: order_date_id
+      - name: order_date_key
         description: "Date key in YYYYMMDD format."
         tests:
           - not_null
@@ -69,7 +69,7 @@ models:
   - name: top_sellers_ranked
     description: "Sellers ranked by total revenue across all currencies, enriched with seller profile and geography."
     columns:
-      - name: seller_id
+      - name: seller_key
         tests:
           - not_null
           - unique
@@ -98,7 +98,7 @@ models:
   - name: category_performance
     description: "Category-level revenue, margin, and discount aggregations enriched with full category hierarchy."
     columns:
-      - name: category_id
+      - name: category_key
         tests:
           - not_null
           - unique
@@ -124,12 +124,12 @@ models:
           - not_null
 
   - name: brand_category_sales
-    description: "Sales broken down by brand and category with full hierarchy. Grain: (brand, category_id)."
+    description: "Sales broken down by brand and category with full hierarchy. Grain: (brand, category_key)."
     columns:
       - name: brand
         tests:
           - not_null
-      - name: category_id
+      - name: category_key
         tests:
           - not_null
       - name: category_name
