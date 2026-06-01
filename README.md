@@ -38,24 +38,26 @@ dbt/
 
 ### Gold layer (primary facts)
 
-| Gold table | Description |
-|---|---|
-| `db_boosting_april_2026_cohort.gold.orders_daily_summary` | Daily order metrics by status, currency, segment, and geography |
-| `db_boosting_april_2026_cohort.gold.seller_performance` | Seller-level revenue and gross margin |
-| `db_boosting_april_2026_cohort.gold.product_category_sales` | Category-level sales and margin |
+
+| Gold table                                                  | Description                                                     |
+| ----------------------------------------------------------- | --------------------------------------------------------------- |
+| `db_boosting_april_2026_cohort.gold.orders_daily_summary`   | Daily order metrics by status, currency, segment, and geography |
+| `db_boosting_april_2026_cohort.gold.seller_performance`     | Seller-level revenue and gross margin                           |
+| `db_boosting_april_2026_cohort.gold.product_category_sales` | Category-level sales and margin                                 |
 
 ### Silver layer (dimension enrichment)
 
 Some gold tables lose dimension keys during aggregation. The following silver tables
 are joined to recover hierarchy and segmentation attributes:
 
-| Silver table | Used by | Provides |
-|---|---|---|
-| `silver.fact_orders_silver` | `revenue_by_segment`, `revenue_by_geography` | Per-order fact rows with `customer_key` and `ship_location_key` |
-| `silver.dim_customer` | `revenue_by_segment` | `customer_segment`, `customer_tier` |
-| `silver.dim_location` | `revenue_by_geography` | `ship_country`, `ship_region` |
-| `silver.dim_seller` | `top_sellers_ranked` | `seller_name`, `seller_type`, `country`, `region` |
-| `silver.dim_category` | `category_performance`, `brand_category_sales` | `category_name`, `parent_category`, `department` |
+
+| Silver table                | Used by                                        | Provides                                                       |
+| --------------------------- | ---------------------------------------------- | -------------------------------------------------------------- |
+| `silver.fact_orders_silver` | `revenue_by_segment`, `revenue_by_geography`   | Per-order fact rows with`customer_id` and `ship_location_id` |
+| `silver.dim_customer`       | `revenue_by_segment`                           | `customer_segment`, `customer_tier`                            |
+| `silver.dim_location`       | `revenue_by_geography`                         | `ship_country`, `ship_region`                                  |
+| `silver.dim_seller`         | `top_sellers_ranked`                           | `seller_name`, `seller_type`, `country`, `region`              |
+| `silver.dim_category`       | `category_performance`, `brand_category_sales` | `category_name`, `parent_category`, `department`               |
 
 All silver dimension joins use active SCD2 records (`WHERE __END_AT IS NULL`).
 
@@ -64,36 +66,43 @@ All silver dimension joins use active SCD2 records (`WHERE __END_AT IS NULL`).
 ## Models
 
 ### `revenue_by_date`
+
 Reads `orders_daily_summary`, drops cancelled orders, re-aggregates by date and currency,
 and adds `cumulative_revenue` and `cumulative_orders` window columns.
-Grain: `(order_date_key, currency_code)`.
+Grain: `(order_date_id, currency_code)`.
 
 ### `revenue_by_segment`
-Sources per-order rows from `silver.fact_orders_silver` (to recover `customer_key`) and
+
+Sources per-order rows from `silver.fact_orders_silver` (to recover `customer_id`) and
 joins `silver.dim_customer` for segment and tier. Aggregates revenue, discount, and order
 counts. Grain: `(customer_segment, customer_tier, currency_code)`.
 
 ### `revenue_by_geography`
-Sources per-order rows from `silver.fact_orders_silver` (to recover `ship_location_key`)
+
+Sources per-order rows from `silver.fact_orders_silver` (to recover `ship_location_id`)
 and joins `silver.dim_location` for country and region. Aggregates revenue, discount, and
 order counts with country-level share. Grain: `(ship_country, ship_region, currency_code)`.
 
 ### `top_sellers_ranked`
+
 Reads `seller_performance`, joins `silver.dim_seller` for seller profile and geography,
 rolls up across currencies, and ranks sellers by total revenue. Outputs `revenue_rank`,
-`revenue_share_pct`, and `units_share_pct`. Grain: `seller_key`.
+`revenue_share_pct`, and `units_share_pct`. Grain: `seller_id`.
 
 ### `category_performance`
+
 Reads `product_category_sales`, joins `silver.dim_category` for the category hierarchy,
 aggregates to one row per category, and computes `gross_margin_pct`, `revenue_share_pct`,
-and `margin_share_pct`. Grain: `category_key`.
+and `margin_share_pct`. Grain: `category_id`.
 
 ### `brand_category_sales`
-Reads `product_category_sales`, aggregates fact metrics by `(brand, category_key)`, then
+
+Reads `product_category_sales`, aggregates fact metrics by `(brand, category_id)`, then
 joins `silver.dim_category` for hierarchy attributes. Computes brand-level and
-department-level revenue share. Grain: `(brand, category_key)`.
+department-level revenue share. Grain: `(brand, category_id)`.
 
 ### `executive_kpis`
+
 Joins all three gold tables via a `CROSS JOIN` of three sub-aggregations.
 Returns a single row with volume, revenue, profitability, fulfilment, and supply KPIs.
 

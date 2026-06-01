@@ -6,7 +6,7 @@ with source as (
 
 dim_categories as (
     select
-        category_key,
+        category_id,
         category_name,
         parent_category,
         department
@@ -17,22 +17,22 @@ dim_categories as (
 brand_facts as (
     select
         brand,
-        category_key,
+        category_id,
         sum(item_count)                as total_item_count,
         sum(total_revenue)             as total_revenue,
         sum(total_gross_margin)        as total_gross_margin,
         avg(avg_discount_pct)          as avg_discount_pct,
         sum(total_units_sold)          as total_units_sold,
         sum(order_count)               as total_orders,
-        count(distinct order_date_key) as active_days
+        count(distinct order_date_id) as active_days
     from source
-    group by brand, category_key
+    group by brand, category_id
 ),
 
 brand_category_totals as (
     select
         f.brand,
-        f.category_key,
+        f.category_id,
         d.category_name,
         d.parent_category,
         d.department,
@@ -44,7 +44,7 @@ brand_category_totals as (
         f.total_orders,
         f.active_days
     from brand_facts f
-    join dim_categories d on f.category_key = d.category_key
+    join dim_categories d on f.category_id = d.category_id
 ),
 
 with_share as (
@@ -59,7 +59,7 @@ with_share as (
 
 select
     brand,
-    category_key,
+    category_id,
     category_name,
     parent_category,
     department,

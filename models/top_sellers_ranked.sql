@@ -7,7 +7,7 @@ with source as (
 -- Active SCD2 records from silver for seller profile/geography
 dim_sellers as (
     select
-        seller_key,
+        seller_id,
         seller_name,
         seller_type,
         country as seller_country,
@@ -19,7 +19,7 @@ dim_sellers as (
 -- Roll up across currencies; join silver for the dimension attributes
 seller_totals as (
     select
-        s.seller_key,
+        s.seller_id,
         d.seller_name,
         d.seller_type,
         d.seller_country,
@@ -30,8 +30,8 @@ seller_totals as (
         sum(s.total_units_sold)   as total_units_sold,
         avg(s.avg_margin_pct)     as avg_margin_pct
     from source s
-    left join dim_sellers d on s.seller_key = d.seller_key
-    group by s.seller_key, d.seller_name, d.seller_type, d.seller_country, d.seller_region
+    left join dim_sellers d on s.seller_id = d.seller_id
+    group by s.seller_id, d.seller_name, d.seller_type, d.seller_country, d.seller_region
 ),
 
 ranked as (
@@ -45,7 +45,7 @@ ranked as (
 
 final as (
     select
-        seller_key,
+        seller_id,
         seller_name,
         seller_type,
         seller_country,

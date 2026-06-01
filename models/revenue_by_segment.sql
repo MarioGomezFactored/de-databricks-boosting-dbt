@@ -1,13 +1,13 @@
 {{ config(materialized='table') }}
 
--- gold.orders_daily_summary lost customer_key during aggregation, so we source
+-- gold.orders_daily_summary lost customer_id during aggregation, so we source
 -- from silver to recover customer_segment and customer_tier.
 
 with orders as (
     select
-        order_date_key,
+        order_date_id,
         currency_code,
-        customer_key,
+        customer_id,
         total_amount    as order_revenue,
         discount_amount as order_discount,
         item_count
@@ -17,7 +17,7 @@ with orders as (
 
 dim_customers as (
     select
-        customer_key,
+        customer_id,
         segment as customer_segment,
         tier    as customer_tier
     from db_boosting_april_2026_cohort.silver.dim_customer
@@ -26,7 +26,7 @@ dim_customers as (
 
 joined as (
     select
-        o.order_date_key,
+        o.order_date_id,
         o.currency_code,
         c.customer_segment,
         c.customer_tier,
@@ -34,7 +34,7 @@ joined as (
         o.order_discount,
         o.item_count
     from orders o
-    left join dim_customers c on o.customer_key = c.customer_key
+    left join dim_customers c on o.customer_id = c.customer_id
 ),
 
 segment_totals as (
@@ -47,7 +47,7 @@ segment_totals as (
         sum(order_discount)            as total_discount,
         sum(item_count)                as total_items,
         avg(order_revenue)             as avg_order_value,
-        count(distinct order_date_key) as active_days
+        count(distinct order_date_id) as active_days
     from joined
     group by customer_segment, customer_tier, currency_code
 ),
