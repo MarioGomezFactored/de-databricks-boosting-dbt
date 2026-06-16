@@ -17,10 +17,8 @@ daily_totals as (
         sum(order_count)     as order_count,
         sum(total_revenue)   as total_revenue,
         sum(total_discount)  as total_discount,
-        sum(total_tax)       as total_tax,
-        sum(total_shipping)  as total_shipping,
         sum(total_items)     as total_items,
-        avg(avg_order_value) as avg_order_value
+        avg(avg_line_value)  as avg_order_value
     from active_orders
     group by order_date_key, currency_code
 ),

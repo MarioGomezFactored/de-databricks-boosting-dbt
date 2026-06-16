@@ -17,9 +17,8 @@ order_kpis as (
         sum(order_count)                                                              as total_orders,
         sum(total_revenue)                                                            as total_revenue,
         sum(total_discount)                                                           as total_discount,
-        sum(total_tax)                                                                as total_tax,
         sum(total_items)                                                              as total_items,
-        avg(avg_order_value)                                                          as avg_order_value,
+        avg(avg_line_value)                                                           as avg_order_value,
         count(distinct order_date_key)                                                as active_days,
         sum(case when order_status = 'Cancelled' then order_count else 0 end)        as cancelled_orders,
         sum(case when order_status = 'Delivered' then order_count else 0 end)        as delivered_orders
@@ -51,7 +50,6 @@ final as (
         o.total_revenue,
         round(o.avg_order_value, 2)                                                       as avg_order_value,
         o.total_discount,
-        o.total_tax,
         -- Profitability
         s.total_gross_margin,
         round(s.total_gross_margin / nullif(o.total_revenue, 0) * 100, 2)                as overall_margin_pct,
